@@ -1,0 +1,75 @@
+import pandas as pd
+import mysql.connector
+from sqlalchemy import create_engine
+from pymongo import MongoClient
+
+print("=== DATA IMPORT CLI ===")
+print("\n1. Import CSV file")
+print("2. Import JSON file")
+
+choice = input("\nEnter your choice (1 or 2): ")
+
+if choice == "1":
+    file_type = "csv"
+elif choice == "2":
+    file_type = "json"
+else:
+    print("Invalid choice!")
+    exit()
+
+file_path = input("Enter the path to your file: ")
+
+try:
+    if file_type == "csv":
+        df = pd.read_csv(file_path)
+    elif file_type == "json":
+        df = pd.read_json(file_path)
+    print("\n=== File Successfully Loaded ===\n")
+    print(df.head())
+except Exception as e:
+    print("Error: Unable to read file.")
+    print(e)
+    exit()
+
+print("\nWhere do you want to insert the data?")
+print("1. MySQL")
+print("2. MongoDB")
+db_choice = input("Enter your choice (1 or 2): ")
+
+if db_choice == "1":
+    table_name = input("Enter table name to save data: ")
+
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="1234",       
+            database="testdb"     
+        )
+        cursor = conn.cursor()
+        print("\nConnected to MySQL")
+
+        engine = create_engine("mysql+mysqlconnector://root:1234@localhost/testdb")
+        df.to_sql(table_name, engine, if_exists="replace", index=False)
+        print(f"Data successfully inserted into MySQL table '{table_name}'")
+    except Exception as e:
+        print("Error inserting into MySQL")
+        print(e)
+
+elif db_choice == "2":
+    collection_name = input("Enter collection name to save data: ")
+
+    try:
+        client = MongoClient("mongodb://localhost:27017/")
+        db = client["testdb"]     
+        collection = db[collection_name]
+
+        data_dict = df.to_dict(orient="records")
+        collection.insert_many(data_dict)
+        print(f"Data successfully inserted into MongoDB collection '{collection_name}'")
+    except Exception as e:
+        print("Error inserting into MongoDB")
+        print(e)
+
+else:
+    print("Invalid database choice!")

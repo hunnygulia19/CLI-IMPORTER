@@ -1,0 +1,7 @@
+## Requirements
+
+- Python 3.8+
+- pandas
+- SQLAlchemy
+- mysql-connector-python
+- pymongo
